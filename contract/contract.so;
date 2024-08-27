@@ -1,1 +1,58 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
+contract SimpleAttendance {
+    address public owner;
+
+    // Student structure
+    struct Student {
+        string name;
+        bool isEnrolled;\
+        []
+        mapping(uint256 => bool) attendance; // Date => Present status
+    }
+
+    mapping(address => Student) public students;
+
+    event StudentEnrolled(address studentAddress, string name);
+    event AttendanceMarked(address studentAddress, uint256 date);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this action.");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // Enroll a student
+    function enrollStudent(address _studentAddress, string memory _name) public onlyOwner {
+        require(!students[_studentAddress].isEnrolled, "Student is already enrolled.");
+        
+        students[_studentAddress].name = _name;
+        students[_studentAddress].isEnrolled = true;
+        
+        emit StudentEnrolled(_studentAddress, _name);
+    }
+
+    // Mark attendance for a student
+    function markAttendance(address _studentAddress) public onlyOwner {
+        require(students[_studentAddress].isEnrolled, "Student is not enrolled.");
+
+        uint256 today = block.timestamp / 1 days; // Current date in days since epoch
+
+        require(!students[_studentAddress].attendance[today], "Attendance for today is already marked.");
+
+        students[_studentAddress].attendance[today] = true;
+
+        emit AttendanceMarked(_studentAddress, today);
+    }
+
+    // Check if a student is present on a given date
+    function isPresent(address _studentAddress, uint256 date) public view returns (bool) {
+        require(students[_studentAddress].isEnrolled, "Student is not enrolled.");
+        
+        return students[_studentAddress].attendance[date];
+    }
+}
